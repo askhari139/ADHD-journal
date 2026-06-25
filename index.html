@@ -106,10 +106,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 /* Task drawer */
 .task-drawer{display:none;padding:0 15px 14px;border-top:.5px solid var(--border);background:var(--surface2)}
 .task-drawer.open{display:block}
-.drawer-time-row{display:flex;gap:8px;margin-bottom:10px;padding-top:12px}
-.time-btn{flex:1;padding:9px 6px;border:1.5px solid var(--border-med);border-radius:10px;background:var(--surface);font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;font-family:inherit;text-align:center;transition:all .15s;line-height:1.3}
-.time-btn.set{border-color:var(--teal);color:var(--teal-t);background:var(--teal-l)}
-.time-btn:active{transform:scale(.97)}
+.drawer-time-row{display:flex;gap:10px;margin-bottom:10px;padding-top:12px}
+.time-field{flex:1;display:flex;flex-direction:column;gap:5px}
+.time-field-label{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.04em}
+.time-field-inputs{display:flex;gap:5px;align-items:center}
+.time-input{flex:1;padding:8px 8px;border:1.5px solid var(--border-med);border-radius:9px;background:var(--surface);color:var(--text);font-size:14px;font-family:inherit;outline:none;min-width:0}
+.time-input:focus{border-color:var(--purple)}
+.now-btn{padding:7px 9px;border:1.5px solid var(--border-med);border-radius:9px;background:var(--surface2);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0}
+.now-btn:active{background:var(--teal-l);color:var(--teal-t);border-color:var(--teal)}
 .drawer-note{width:100%;padding:10px 12px;border:1.5px solid var(--border-med);border-radius:10px;font-size:14px;background:var(--surface);color:var(--text);font-family:inherit;outline:none;resize:none;line-height:1.6;min-height:80px}
 .drawer-note:focus{border-color:var(--purple)}
 .drawer-note::placeholder{color:var(--text3)}
@@ -586,12 +590,20 @@ function buildTaskHTML(task){
     </div>
     <div class="task-drawer${s._open?' open':''}" id="dr-${task.id}">
       <div class="drawer-time-row">
-        <button class="time-btn${s.startedAt?' set':''}" onclick="stampTime('${task.id}','start')">
-          ${s.startedAt ? '▶ '+fmtTime(s.startedAt) : '▶ Start'}
-        </button>
-        <button class="time-btn${s.endedAt?' set':''}" onclick="stampTime('${task.id}','end')">
-          ${s.endedAt ? '■ '+fmtTime(s.endedAt) : '■ End'}
-        </button>
+        <div class="time-field">
+          <span class="time-field-label">▶ Start</span>
+          <div class="time-field-inputs">
+            <input type="time" class="time-input" id="start-${task.id}" value="${isoToTimeVal(s.startedAt)}" onchange="setTimeFromInput('${task.id}','start',this.value)" />
+            <button class="now-btn" onclick="stampNow('${task.id}','start')">Now</button>
+          </div>
+        </div>
+        <div class="time-field">
+          <span class="time-field-label">■ End</span>
+          <div class="time-field-inputs">
+            <input type="time" class="time-input" id="end-${task.id}" value="${isoToTimeVal(s.endedAt)}" onchange="setTimeFromInput('${task.id}','end',this.value)" />
+            <button class="now-btn" onclick="stampNow('${task.id}','end')">Now</button>
+          </div>
+        </div>
       </div>
       <textarea class="drawer-note" id="note-${task.id}" placeholder="Notes, observations, anything…" onblur="saveNote('${task.id}')" oninput="autoResize(this)">${esc(s.note||'')}</textarea>
       <div class="drawer-save-row">
@@ -647,22 +659,47 @@ function toggleDrawer(e, id){
   }
 }
 
-function stampTime(id, which){
+// convert "HH:MM" time input value to a full ISO string for today
+function timeValToIso(val){
+  if(!val) return null;
+  const [h,m] = val.split(':');
+  const d = new Date();
+  d.setHours(parseInt(h), parseInt(m), 0, 0);
+  return d.toISOString();
+}
+
+// convert ISO string to "HH:MM" for time input value
+function isoToTimeVal(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  return pad(d.getHours())+':'+pad(d.getMinutes());
+}
+
+function setTimeFromInput(id, which, val){
+  if(!state[id]) state[id]={};
+  const iso = timeValToIso(val);
+  if(which==='start') state[id].startedAt = iso;
+  else state[id].endedAt = iso;
+  queueSave(id);
+  updateTimeBadge(id);
+}
+
+function stampNow(id, which){
   if(!state[id]) state[id]={};
   const iso = new Date().toISOString();
   if(which==='start') state[id].startedAt = iso;
   else state[id].endedAt = iso;
+  // update the input field to show current time
+  const input = document.getElementById((which==='start'?'start-':'end-')+id);
+  if(input) input.value = isoToTimeVal(iso);
   queueSave(id);
-  // re-render just the time buttons
-  const btn = document.querySelector(`#dr-${id} .time-btn${which==='start'?':first-child':':last-child'}`);
-  if(btn){
-    btn.classList.add('set');
-    btn.textContent = (which==='start'?'▶ ':'■ ')+fmtTime(iso);
-  }
-  // also update badge in task row
-  const badge = document.querySelector(`#tw-${id} .task-time-badge`);
-  const s = state[id];
+  updateTimeBadge(id);
+}
+
+function updateTimeBadge(id){
+  const s = state[id]||{};
   const badgeHTML = `<span class="task-time-badge">${fmtTime(s.startedAt)||'—'} → ${fmtTime(s.endedAt)||'—'}</span>`;
+  const badge = document.querySelector(`#tw-${id} .task-time-badge`);
   if(badge){ badge.outerHTML = badgeHTML; }
   else {
     const meta = document.querySelector(`#tw-${id} .task-meta`);
