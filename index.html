@@ -18,7 +18,7 @@
   --coral:#993C1D; --coral-l:#FAECE7; --coral-t:#712B13;
   --red:#c0392b; --red-l:#FDEDED;
   --nav-h:64px; --safe-b:env(safe-area-inset-bottom,0px);
-} 
+}
 @media(prefers-color-scheme:dark){
   :root{
     --bg:#131312; --surface:#1e1e1c; --surface2:#272724; --surface3:#303030;
@@ -780,8 +780,8 @@ function resetDay(){
   document.getElementById('mood-tip').textContent='Tap your energy level — it changes where you start.';
   updateCycleDots();
   renderAllZones();
-  saveQueue={ALL_TASKS.map(t=>t.id).reduce((a,k)=>{a[k]=true;return a},{})};
-  // push deletes via upsert with done=false
+  // queue all tasks for save with done=false
+  saveQueue={};
   ALL_TASKS.forEach(t=>{ saveQueue[t.id]=true; state[t.id]={done:false}; });
   flushSave();
   showToast('Day reset');
