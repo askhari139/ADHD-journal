@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Today</title>
+<style>
+:root {
+  --bg:#f7f6f3; --surface:#fff; --surface2:#f0efe9; --surface3:#e8e7e1;
+  --border:rgba(0,0,0,.08); --border-med:rgba(0,0,0,.15);
+  --text:#1a1a18; --text2:#5a5a56; --text3:#99988f;
+  --purple:#534AB7; --purple-l:#EEEDFE; --purple-t:#3C3489;
+  --teal:#0F6E56; --teal-l:#E1F5EE; --teal-t:#085041;
+  --amber:#BA7517; --amber-l:#FAEEDA; --amber-t:#633806;
+  --green:#3B6D11; --green-l:#EAF3DE; --green-t:#27500A;
+  --coral:#993C1D; --coral-l:#FAECE7; --coral-t:#712B13;
+  --red:#c0392b; --red-l:#FDEDED;
+  --nav-h:64px; --safe-b:env(safe-area-inset-bottom,0px);
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#131312; --surface:#1e1e1c; --surface2:#272724; --surface3:#303030;
+    --border:rgba(255,255,255,.07); --border-med:rgba(255,255,255,.14);
+    --text:#e8e8e0; --text2:#a0a098; --text3:#606058;
+    --purple-l:#1e1a4a; --purple-t:#b0a8f0;
+    --teal-l:#0a2420; --teal-t:#5dcaa5;
+    --amber-l:#2a1a00; --amber-t:#f0b840;
+    --green-l:#0c1e04; --green-t:#97C459;
+    --coral-l:#2e0e06; --coral-t:#F0997B;
+    --red-l:#2a0808;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100%;height:100dvh}
+
+/* Header */
+#header{padding:14px 18px 10px;flex-shrink:0;background:var(--bg);border-bottom:.5px solid var(--border)}
+#header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+#header h1{font-size:21px;font-weight:600;letter-spacing:-.5px}
+#header-right{display:flex;align-items:center;gap:10px}
+#date-label{font-size:13px;color:var(--text3)}
+#sync-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background .3s}
+#sync-dot.syncing{background:var(--amber)}
+#sync-dot.ok{background:var(--teal)}
+#sync-dot.error{background:var(--red)}
+#progress-track{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+#progress-fill{height:3px;background:var(--purple);border-radius:2px;width:0%;transition:width .4s ease}
+#progress-label{font-size:11px;color:var(--text3);margin-top:4px}
+
+/* Scroll */
+#scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--nav-h) + var(--safe-b) + 20px)}
+
+/* Nav */
+#bottom-nav{position:relative;flex-shrink:0;height:calc(var(--nav-h) + var(--safe-b));background:var(--surface);border-top:.5px solid var(--border);display:flex;align-items:flex-start;padding-top:8px;padding-bottom:var(--safe-b);z-index:10}
+.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;border:none;background:none;color:var(--text3);font-size:10px;font-family:inherit;transition:color .15s}
+.nav-tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.nav-tab.active{color:var(--purple)}
+
+/* Panels */
+.panel{display:none;padding:14px 14px 0}
+.panel.active{display:block}
+.section-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin:18px 0 7px}
+.section-label:first-child{margin-top:2px}
+
+/* Mood */
+#mood-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px}
+.mood-btn{padding:11px 4px;border:1.5px solid var(--border-med);border-radius:12px;background:var(--surface);font-size:14px;font-weight:500;color:var(--text2);cursor:pointer;text-align:center;font-family:inherit;transition:all .15s}
+.mood-btn.active{border-color:var(--purple);color:var(--purple-t);background:var(--purple-l)}
+#mood-tip{font-size:14px;color:var(--text2);line-height:1.6;background:var(--surface2);border-radius:12px;padding:11px 13px;min-height:54px;margin-bottom:2px}
+
+/* Zone cards */
+.zone{background:var(--surface);border:.5px solid var(--border);border-radius:16px;margin-bottom:10px;overflow:hidden}
+.zone-head{display:flex;align-items:center;gap:10px;padding:13px 15px 9px}
+.zone-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.zone-name{font-size:16px;font-weight:600;flex:1}
+.zone-time{font-size:12px;color:var(--text3)}
+.zone-desc{font-size:13px;color:var(--text2);line-height:1.6;padding:0 15px 11px}
+.zone-tasks{border-top:.5px solid var(--border)}
+
+/* Tasks */
+.task-wrapper{border-bottom:.5px solid var(--border)}
+.task-wrapper:last-child{border-bottom:none}
+.task-row{display:flex;align-items:flex-start;gap:11px;padding:12px 15px;cursor:pointer;transition:background .1s}
+.task-row:active{background:var(--surface2)}
+.task-box{width:22px;height:22px;border:1.5px solid var(--border-med);border-radius:6px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.task-wrapper.done .task-box{background:var(--purple);border-color:var(--purple)}
+.task-wrapper.done .task-box::after{content:'';display:block;width:5px;height:9px;border-right:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(45deg) translate(-1px,-1px)}
+.task-main{flex:1;min-width:0}
+.task-text{font-size:15px;line-height:1.45;color:var(--text)}
+.task-wrapper.done .task-text{color:var(--text3);text-decoration:line-through}
+.task-meta{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap}
+.task-tag{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px}
+.tag-deep{background:var(--purple-l);color:var(--purple-t)}
+.tag-light{background:var(--teal-l);color:var(--teal-t)}
+.tag-admin{background:var(--surface2);color:var(--text2)}
+.tag-reset{background:var(--amber-l);color:var(--amber-t)}
+.tag-body{background:var(--green-l);color:var(--green-t)}
+.tag-spirit{background:var(--coral-l);color:var(--coral-t)}
+.task-time-badge{font-size:11px;color:var(--text3);background:var(--surface2);padding:2px 7px;border-radius:10px}
+.task-expand-btn{width:28px;height:28px;border:none;background:none;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;flex-shrink:0;margin-top:-2px;font-size:16px;transition:transform .2s}
+.task-expand-btn.open{transform:rotate(180deg)}
+
+/* Task drawer */
+.task-drawer{display:none;padding:0 15px 14px;border-top:.5px solid var(--border);background:var(--surface2)}
+.task-drawer.open{display:block}
+.drawer-time-row{display:flex;gap:8px;margin-bottom:10px;padding-top:12px}
+.time-btn{flex:1;padding:9px 6px;border:1.5px solid var(--border-med);border-radius:10px;background:var(--surface);font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;font-family:inherit;text-align:center;transition:all .15s;line-height:1.3}
+.time-btn.set{border-color:var(--teal);color:var(--teal-t);background:var(--teal-l)}
+.time-btn:active{transform:scale(.97)}
+.drawer-note{width:100%;padding:10px 12px;border:1.5px solid var(--border-med);border-radius:10px;font-size:14px;background:var(--surface);color:var(--text);font-family:inherit;outline:none;resize:none;line-height:1.6;min-height:80px}
+.drawer-note:focus{border-color:var(--purple)}
+.drawer-note::placeholder{color:var(--text3)}
+.drawer-save-row{display:flex;justify-content:flex-end;margin-top:7px}
+.drawer-save-btn{padding:7px 16px;border-radius:8px;background:var(--purple);color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer;font-family:inherit}
+.drawer-save-btn:active{opacity:.85}
+.drawer-saved{font-size:12px;color:var(--teal-t);align-self:center;margin-right:8px;opacity:0;transition:opacity .2s}
+.drawer-saved.show{opacity:1}
+
+/* Timer */
+#timer-card{background:var(--surface);border:.5px solid var(--border);border-radius:20px;padding:22px 18px;text-align:center;margin-bottom:12px}
+#timer-display{font-size:64px;font-weight:300;letter-spacing:-2px;color:var(--text);font-variant-numeric:tabular-nums;line-height:1;margin-bottom:6px}
+#timer-display.running{color:var(--purple)}
+#timer-display.break-mode{color:var(--teal)}
+#timer-mode-label{font-size:13px;color:var(--text3);margin-bottom:18px}
+#timer-btns{display:flex;gap:10px;justify-content:center}
+.timer-btn{padding:13px 28px;border-radius:50px;border:1.5px solid var(--border-med);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;background:var(--surface);color:var(--text)}
+.timer-btn.primary{background:var(--purple);color:#fff;border-color:var(--purple)}
+.timer-btn:active{transform:scale(.96)}
+#cycle-indicator{display:flex;gap:8px;justify-content:center;margin-top:18px}
+.cycle-dot{width:8px;height:8px;border-radius:50%;background:var(--border-med);transition:background .2s}
+.cycle-dot.done{background:var(--purple)}
+.cycle-dot.current{background:var(--purple);box-shadow:0 0 0 3px var(--purple-l)}
+#task-name-input{width:100%;padding:12px 13px;border:1.5px solid var(--border-med);border-radius:12px;font-size:15px;background:var(--surface);color:var(--text);font-family:inherit;outline:none;margin-bottom:10px}
+#task-name-input:focus{border-color:var(--purple)}
+#task-name-input::placeholder{color:var(--text3)}
+#preset-btns{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.preset{padding:7px 13px;border:1px solid var(--border-med);border-radius:20px;font-size:13px;color:var(--text2);background:var(--surface);cursor:pointer;font-family:inherit;white-space:nowrap}
+.preset:active{background:var(--surface2)}
+
+/* Rules */
+.rule-card{background:var(--surface);border:.5px solid var(--border);border-radius:16px;padding:15px;margin-bottom:9px}
+.rule-title{font-size:15px;font-weight:600;margin-bottom:5px}
+.rule-body{font-size:14px;color:var(--text2);line-height:1.65}
+.rule-accent{border-left:3px solid var(--purple);border-radius:0 16px 16px 0;padding-left:13px}
+
+/* Drift */
+.drift-card{background:var(--surface);border:.5px solid var(--border);border-radius:16px;padding:15px;margin-bottom:9px;display:flex;gap:13px;align-items:flex-start}
+.drift-icon{font-size:24px;flex-shrink:0}
+.drift-title{font-size:15px;font-weight:600;margin-bottom:4px}
+.drift-body{font-size:14px;color:var(--text2);line-height:1.6}
+
+/* History */
+#hist-date-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.hnav-btn{padding:8px 14px;border:1px solid var(--border-med);border-radius:10px;background:var(--surface);color:var(--text2);font-size:13px;cursor:pointer;font-family:inherit}
+.hnav-btn:active{background:var(--surface2)}
+.hnav-btn.disabled{opacity:.3;pointer-events:none}
+#hist-date-display{font-size:14px;font-weight:600;color:var(--text)}
+.hist-zone{background:var(--surface);border:.5px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden}
+.hist-zone-head{padding:11px 14px;border-bottom:.5px solid var(--border);font-size:14px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:8px}
+.hist-task{padding:11px 14px;border-bottom:.5px solid var(--border)}
+.hist-task:last-child{border-bottom:none}
+.hist-task-top{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.hist-task-name{font-size:14px;color:var(--text);flex:1}
+.hist-done-badge{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--green-l);color:var(--green-t)}
+.hist-pending-badge{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--surface2);color:var(--text3)}
+.hist-times{font-size:12px;color:var(--text3);margin-bottom:4px}
+.hist-note{font-size:13px;color:var(--text2);line-height:1.6;background:var(--surface2);border-radius:8px;padding:8px 10px;white-space:pre-wrap}
+.hist-empty{font-size:14px;color:var(--text3);padding:20px 0;text-align:center}
+.hist-mood-row{background:var(--surface);border:.5px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.hist-mood-label{font-size:13px;color:var(--text2)}
+.hist-mood-val{font-size:13px;font-weight:600;color:var(--text)}
+.hist-progress{font-size:13px;color:var(--text2);margin-left:auto}
+
+/* Misc */
+.ghost-btn{width:100%;padding:13px;border:1px solid var(--border-med);border-radius:12px;background:none;color:var(--text2);font-size:14px;cursor:pointer;font-family:inherit;margin-top:6px}
+.ghost-btn:active{background:var(--surface2)}
+#toast{position:fixed;bottom:calc(var(--nav-h) + var(--safe-b) + 12px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:50px;font-size:14px;font-weight:500;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;z-index:100;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border-med);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="header">
+  <div id="header-top">
+    <h1>Today</h1>
+    <div id="header-right">
+      <span id="sync-dot" title="Sync status"></span>
+      <span id="date-label"></span>
+    </div>
+  </div>
+  <div id="progress-track"><div id="progress-fill"></div></div>
+  <div id="progress-label">Loading…</div>
+</div>
+
+<div id="scroll-area">
+
+<!-- SCHEDULE -->
+<div id="panel-schedule" class="panel active">
+
+  <div class="section-label">How are you right now?</div>
+  <div id="mood-row">
+    <button class="mood-btn" onclick="setMood('sharp')">Sharp</button>
+    <button class="mood-btn" onclick="setMood('okay')">Okay</button>
+    <button class="mood-btn" onclick="setMood('flat')">Flat</button>
+    <button class="mood-btn" onclick="setMood('wired')">Wired</button>
+  </div>
+  <div id="mood-tip">Tap your energy level — it changes where you start.</div>
+
+  <!-- MORNING BASICS -->
+  <div class="section-label">Morning basics</div>
+  <div class="zone">
+    <div class="zone-head">
+      <div class="zone-dot" style="background:var(--amber)"></div>
+      <span class="zone-name">Wake up</span>
+      <span class="zone-time">~20 min</span>
+    </div>
+    <div class="zone-desc">Same every day, no decisions. Do these before looking at your phone.</div>
+    <div class="zone-tasks" id="zone-morning"></div>
+  </div>
+
+  <!-- EXERCISE -->
+  <div class="section-label">Exercise</div>
+  <div class="zone">
+    <div class="zone-head">
+      <div class="zone-dot" style="background:var(--green)"></div>
+      <span class="zone-name">Movement</span>
+      <span class="zone-time">30–45 min</span>
+    </div>
+    <div class="zone-desc">Before prayer, before work. Exercise raises dopamine and norepinephrine — the same pathway as stimulant medication — for 2–3 hours after. Even 20 minutes of brisk walking counts.</div>
+    <div class="zone-tasks" id="zone-exercise"></div>
+  </div>
+
+  <!-- PRAYER -->
+  <div class="section-label">Prayer</div>
+  <div class="zone">
+    <div class="zone-head">
+      <div class="zone-dot" style="background:var(--coral)"></div>
+      <span class="zone-name">Morning prayer</span>
+      <span class="zone-time">Your duration</span>
+    </div>
+    <div class="zone-desc">After movement, before the day's noise. Sets intention and reduces the ambient restlessness that makes initiation harder.</div>
+    <div class="zone-tasks" id="zone-prayer-am"></div>
+  </div>
+
+  <!-- DEEP WORK -->
+  <div class="section-label">Deep work</div>
+  <div class="zone">
+    <div class="zone-head">
+      <div class="zone-dot" style="background:var(--purple)"></div>
+      <span class="zone-name">Block 1</span>
+      <span class="zone-time">45 on / 15 off</span>
+    </div>
+    <div class="zone-desc">Name the task before the timer starts. If stuck, write "I'm stuck because…" and keep going.</div>
+    <div class="zone-tasks" id="zone-block1"></div>
+  </div>
+
+  <div class="zone">
+    <div class="zone-head">
+      <div class="zone-dot" style="background:var(--purple)"></div>
+      <span class="zone-name">Block 2</span>
+      <span class="zone-time">45 on / 15 off</span>
+    </div>
+    <div class="zone-desc">Same task continued, or consciously switch. If energy is dropping, move to light tasks — don't push through flat state.</div>
+    <div class="zone-tasks" id="zone-block2"></div>
+  </div>
+
+  <!-- LIGHT WORK -->
+  <div class="section-label">Light work</div>
+  <div class="zone">
+    <div class="zone-head">
+      <div class="zone-dot" style="background:var(--teal)"></div>
+      <span class="zone-name">Admin + reading</span>
+      <span class="zone-time">30–45 min</span>
+    </div>
+    <div class="zone-desc">Email, low-stakes tasks, reading. Protects deep blocks from admin pollution.</div>
+    <div class="zone-tasks" id="zone-light"></div>
+  </div>
+
+  <!-- BLOCK 3 -->
+  <div class="section-label">Optional third block</div>
+  <div class="zone">
+    <div class="zone-head">
+      <div class="zone-dot" style="background:var(--purple)"></div>
+      <span class="zone-name">Block 3</span>
+      <span class="zone-time">45 min · mood-gated</span>
+    </div>
+    <div class="zone-desc">Only if energy is genuinely there — not guilt-driven. A forced block usually produces drift.</div>
+    <div class="zone-tasks" id="zone-block3"></div>
+  </div>
+
+  <!-- EVENING -->
+  <div class="section-label">Evening anchor</div>
+  <div class="zone">
+    <div class="zone-head">
+      <div class="zone-dot" style="background:var(--coral)"></div>
+      <span class="zone-name">Evening prayer</span>
+      <span class="zone-time">Your duration</span>
+    </div>
+    <div class="zone-desc">Bookends the day. Transitions out of work mode — a boundary the ADHD brain otherwise struggles to make on its own.</div>
+    <div class="zone-tasks" id="zone-prayer-pm"></div>
+  </div>
+
+  <div class="zone">
+    <div class="zone-head">
+      <div class="zone-dot" style="background:var(--amber)"></div>
+      <span class="zone-name">Day close</span>
+      <span class="zone-time">10 min · hard stop</span>
+    </div>
+    <div class="zone-desc">Without this, tomorrow's initiation is harder.</div>
+    <div class="zone-tasks" id="zone-close"></div>
+  </div>
+
+  <button class="ghost-btn" onclick="resetDay()">↺ Reset today's tasks</button>
+
+</div><!-- /schedule -->
+
+<!-- TIMER -->
+<div id="panel-timer" class="panel">
+  <div class="section-label">Name this block</div>
+  <input id="task-name-input" type="text" placeholder="What exactly are you doing?" maxlength="100"/>
+  <div id="preset-btns">
+    <button class="preset" onclick="setPreset('Simulate 1-CPT in rxode2')">rxode2 sim</button>
+    <button class="preset" onclick="setPreset('nlmixr2 fit + diagnostics')">nlmixr2 fit</button>
+    <button class="preset" onclick="setPreset('Read PKPD paper')">Read paper</button>
+    <button class="preset" onclick="setPreset('Write Rmd notes')">Write notes</button>
+    <button class="preset" onclick="setPreset('Email + admin')">Email</button>
+    <button class="preset" onclick="setPreset('Exercise')">Exercise</button>
+    <button class="preset" onclick="setPreset('Prayer')">Prayer</button>
+  </div>
+  <div id="timer-card">
+    <div id="timer-display">45:00</div>
+    <div id="timer-mode-label">Focus block</div>
+    <div id="timer-btns">
+      <button class="timer-btn secondary" onclick="resetTimer()">Reset</button>
+      <button class="timer-btn primary" id="start-btn" onclick="toggleTimer()">Start</button>
+    </div>
+    <div id="cycle-indicator">
+      <div class="cycle-dot" id="d0"></div>
+      <div class="cycle-dot" id="d1"></div>
+      <div class="cycle-dot" id="d2"></div>
+    </div>
+  </div>
+  <div class="rule-card rule-accent">
+    <div class="rule-title">2-minute rule</div>
+    <div class="rule-body">Can't start? Commit to 2 minutes only. Resistance usually dissolves after contact with the task.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rule-title">Parking lot</div>
+    <div class="rule-body">Stray thought mid-block? Write it on paper, return immediately. Attend to it in the light block.</div>
+  </div>
+</div>
+
+<!-- RULES -->
+<div id="panel-rules" class="panel">
+  <div class="section-label">Core rules</div>
+  <div class="rule-card rule-accent">
+    <div class="rule-title">Only 3 tasks per day</div>
+    <div class="rule-body">Written on paper, before screens. The constraint forces prioritization while your mind is still fresh — not mid-day when decisions are expensive.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rule-title">~3.5 hours of deep work is enough</div>
+    <div class="rule-body">Intentional, not a bug. For ADHD, 3–4 hours of genuine focused work is what the brain can sustain before quality degrades. Most people spend 8 hours "working" and get 2 hours of real work done — scattered and exhausted. This makes those hours deliberate instead.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rule-title">Exercise before deep work</div>
+    <div class="rule-body">Exercise raises dopamine and norepinephrine — the same pathway as stimulant medication — and the effect lasts 2–3 hours. It is one of the most reliable non-pharmacological ADHD interventions. Even 20 minutes of brisk walking counts.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rule-title">Name the task before the timer</div>
+    <div class="rule-body">"Work on PKPD" is almost impossible to initiate. "Simulate theophylline 1-CPT in rxode2 with Ka=0.4" is not. Specificity is what makes starting possible.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rule-title">Name productive procrastination</div>
+    <div class="rule-body">When you drift into something that feels productive but isn't your task — say it out loud: "I am choosing to reorganize files instead of my task." Converting unconscious drift into a decision is what makes it redirectable.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rule-title">Systems fail at transitions, not tasks</div>
+    <div class="rule-body">You probably do fine inside a block. It's the gaps between blocks that break things. Know what you're doing next before you stop what you're doing now — every time.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rule-title">Flat state is not a willpower problem</div>
+    <div class="rule-body">Change your environment first: stand up, go outside for 5 min, change rooms. State is physical. Then name the smallest possible version of the task — not "write code," but "open the file."</div>
+  </div>
+  <div class="section-label">Tag key</div>
+  <div class="rule-card">
+    <div class="rule-body" style="display:flex;flex-direction:column;gap:10px">
+      <span><span class="task-tag tag-deep">deep</span>&nbsp; high-demand output — needs your best state</span>
+      <span><span class="task-tag tag-light">light</span>&nbsp; low-demand input — readable in any state</span>
+      <span><span class="task-tag tag-body">body</span>&nbsp; physical — exercise, movement</span>
+      <span><span class="task-tag tag-spirit">spirit</span>&nbsp; prayer, reflection, intention</span>
+      <span><span class="task-tag tag-reset">reset</span>&nbsp; physical break, no screens</span>
+      <span><span class="task-tag tag-admin">admin</span>&nbsp; planning, routing, meta-tasks</span>
+    </div>
+  </div>
+</div>
+
+<!-- DRIFT -->
+<div id="panel-drift" class="panel">
+  <div class="section-label">What happened?</div>
+  <div class="drift-card"><div class="drift-icon">⌛</div><div><div class="drift-title">Zoned out — lost track of time</div><div class="drift-body">Don't reconstruct the lost time. Write the time right now. Name your next action in one sentence. Set a 5-minute timer. Do only that.</div></div></div>
+  <div class="drift-card"><div class="drift-icon">🔀</div><div><div class="drift-title">Fell into productive procrastination</div><div class="drift-body">Close whatever you drifted into — don't finish it. Put it on the parking lot. Set a 2-minute timer and make contact with your actual task, even just reading what you last wrote.</div></div></div>
+  <div class="drift-card"><div class="drift-icon">🫥</div><div><div class="drift-title">Flat — can't start anything</div><div class="drift-body">State problem, not willpower. Stand up, go outside for 5 minutes. Come back and name the smallest possible version of the task. "Open the file" counts.</div></div></div>
+  <div class="drift-card"><div class="drift-icon">🔥</div><div><div class="drift-title">Hyperfocused on the wrong thing</div><div class="drift-body">Set an alarm for 10 minutes labeled with your actual task. When it fires, finish the sentence and switch. Redirect hyperfocus — don't fight it.</div></div></div>
+  <div class="drift-card"><div class="drift-icon">💀</div><div><div class="drift-title">Whole morning gone, nothing done</div><div class="drift-body">Don't write the day off. Run one 45-minute block right now on one task. One block done is not a failed day. The close-out still matters.</div></div></div>
+  <div class="drift-card"><div class="drift-icon">🙃</div><div><div class="drift-title">The system feels too rigid today</div><div class="drift-body">Fine. Minimum viable day: name one task, set one timer, do it. One block done beats zero blocks with a perfect system you didn't start.</div></div></div>
+</div>
+
+<!-- HISTORY -->
+<div id="panel-history" class="panel">
+  <div id="hist-date-nav">
+    <button class="hnav-btn" id="hist-prev" onclick="histNav(-1)">← Earlier</button>
+    <span id="hist-date-display"></span>
+    <button class="hnav-btn disabled" id="hist-next" onclick="histNav(1)">Later →</button>
+  </div>
+  <div id="hist-content"><div class="hist-empty">Loading…</div></div>
+</div>
+
+</div><!-- /scroll-area -->
+
+<nav id="bottom-nav">
+  <button class="nav-tab active" id="tab-schedule" onclick="showPanel('schedule')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Day
+  </button>
+  <button class="nav-tab" id="tab-timer" onclick="showPanel('timer')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><polyline points="12 9 12 13 14.5 15.5"/><line x1="9" y1="2" x2="15" y2="2"/></svg>
+    Timer
+  </button>
+  <button class="nav-tab" id="tab-rules" onclick="showPanel('rules')">
+    <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="3" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="3" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg>
+    Rules
+  </button>
+  <button class="nav-tab" id="tab-drift" onclick="showPanel('drift')">
+    <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    Drift
+  </button>
+  <button class="nav-tab" id="tab-history" onclick="showPanel('history')">
+    <svg viewBox="0 0 24 24"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4.5"/><polyline points="3 3 3 9 9 9"/></svg>
+    History
+  </button>
+</nav>
+
+</div><!-- /app -->
+<div id="toast"></div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+const SB_URL  = 'https://hqsbrlerctbfviknkdbz.supabase.co';
+const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxc2JybGVyY3RiZnZpa25rZGJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNDg2NDMsImV4cCI6MjA5NzkyNDY0M30.aXqWBvomSplIVpuTWGF3-scDObBrhVAk2C2EdlxBmHw';
+const TABLE   = 'adhd_journal';
+
+// ── Task definitions ─────────────────────────────────────────────────────────
+const ZONES = [
+  { id:'zone-morning', tasks:[
+    { id:'brush',    text:'Brush teeth',                        tag:'admin' },
+    { id:'toilet',   text:'Toilet / freshen up',                tag:'admin' },
+    { id:'bath',     text:'Bath or shower',                     tag:'admin' },
+    { id:'dress',    text:'Get dressed',                        tag:'admin' },
+    { id:'water',    text:'Glass of water',                     tag:'reset' },
+    { id:'light',    text:'5 min of light — window or outside', tag:'reset' },
+    { id:'tasks3',   text:'Write today\'s 3 tasks on paper',    tag:'admin' },
+  ]},
+  { id:'zone-exercise', tasks:[
+    { id:'exercise', text:'Exercise — whatever intensity you can manage today', tag:'body' },
+    { id:'cooldown', text:'5 min cool-down or walk before sitting back down',   tag:'body' },
+  ]},
+  { id:'zone-prayer-am', tasks:[
+    { id:'prayer-am',    text:'Sit, breathe, pray — phone in another room', tag:'spirit' },
+    { id:'intention', text:'Set one intention for the day in a sentence',    tag:'spirit' },
+  ]},
+  { id:'zone-block1', tasks:[
+    { id:'b1-name',  text:'Name the one task. Write it down. Then start the timer.', tag:'admin' },
+    { id:'b1-work',  text:'Work until timer ends — no task-switching',               tag:'deep'  },
+    { id:'b1-break', text:'Break: stand up, no screens. Note one thing done.',       tag:'reset' },
+  ]},
+  { id:'zone-block2', tasks:[
+    { id:'b2-work',  text:'Continue block 1 task, or decide to switch — before restarting timer', tag:'deep'  },
+    { id:'b2-check', text:'Productive procrastination check: is what I\'m doing on my task list?', tag:'admin' },
+  ]},
+  { id:'zone-light', tasks:[
+    { id:'email',    text:'Email, messages, admin that accumulated',           tag:'light' },
+    { id:'reading',  text:'Reading — low-demand input, not output',            tag:'light' },
+    { id:'tmrlist',  text:'Update tomorrow\'s task list while today is fresh', tag:'admin' },
+  ]},
+  { id:'zone-block3', tasks:[
+    { id:'b3-check', text:'Gut check: am I actually ready, or just feel like I should be working?', tag:'admin' },
+    { id:'b3-work',  text:'If yes: name the task, set the timer, go',                                tag:'deep'  },
+  ]},
+  { id:'zone-prayer-pm', tasks:[
+    { id:'prayer-pm', text:'Sit, reflect, pray — phone in another room', tag:'spirit' },
+  ]},
+  { id:'zone-close', tasks:[
+    { id:'tmrtasks', text:'Write tomorrow\'s 3 tasks on paper',        tag:'admin' },
+    { id:'closeapp', text:'Close all work tabs',                        tag:'admin' },
+    { id:'phoneaway',text:'Phone to another room — day is done',       tag:'reset' },
+  ]},
+];
+
+const ALL_TASKS = ZONES.flatMap(z => z.tasks);
+const TASK_MAP  = Object.fromEntries(ALL_TASKS.map(t => [t.id, t]));
+
+// ── State ────────────────────────────────────────────────────────────────────
+let state = {};        // { [taskId]: { done, startedAt, endedAt, note } }
+let mood  = null;
+let blocksCompleted = 0;
+let timerRunning = false, timerInterval = null, timerSeconds = 45*60, timerIsBreak = false;
+let wakeLock = null;
+let histOffset = 0;
+let saveQueue = {};
+let saveTimer = null;
+
+// ── Date helpers ─────────────────────────────────────────────────────────────
+function todayStr(){ return new Date().toISOString().slice(0,10) }
+function dateFromOffset(o){ const d=new Date(); d.setDate(d.getDate()+o); return d }
+function fmtKey(d){ return d.toISOString().slice(0,10) }
+function fmtDisplay(d){
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()];
+}
+function fmtFull(d){
+  return d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+function fmtTime(iso){ if(!iso)return ''; const d=new Date(iso); return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+
+// ── Supabase helpers ─────────────────────────────────────────────────────────
+function sbHeaders(){ return {'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY} }
+
+async function sbUpsert(row){
+  const r = await fetch(SB_URL+'/rest/v1/'+TABLE+'?on_conflict=entry_date,task_id', {
+    method:'POST',
+    headers:{...sbHeaders(),'Prefer':'resolution=merge-duplicates'},
+    body:JSON.stringify(row)
+  });
+  if(!r.ok) throw new Error(await r.text());
+}
+
+async function sbLoad(dateKey){
+  const r = await fetch(SB_URL+'/rest/v1/'+TABLE+'?entry_date=eq.'+dateKey+'&select=*', {
+    headers: sbHeaders()
+  });
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function sbLoadRange(fromKey, toKey){
+  const r = await fetch(
+    SB_URL+'/rest/v1/'+TABLE+'?entry_date=gte.'+fromKey+'&entry_date=lte.'+toKey+'&select=*&order=entry_date.desc,task_id.asc',
+    { headers: sbHeaders() }
+  );
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// ── Sync indicator ───────────────────────────────────────────────────────────
+function syncState(s){ // 'syncing'|'ok'|'error'|''
+  const dot = document.getElementById('sync-dot');
+  dot.className = s;
+  dot.title = {syncing:'Saving…', ok:'Saved', error:'Sync error — check connection', '':''}[s]||'';
+}
+
+// ── Render tasks ─────────────────────────────────────────────────────────────
+function buildTaskHTML(task){
+  const s = state[task.id] || {};
+  const isDone = !!s.done;
+  const hasNote = !!(s.note && s.note.trim());
+  const hasTime = !!(s.startedAt || s.endedAt);
+  return `
+  <div class="task-wrapper${isDone?' done':''}" id="tw-${task.id}">
+    <div class="task-row" onclick="toggleTask('${task.id}')">
+      <div class="task-box"></div>
+      <div class="task-main">
+        <div class="task-text">${esc(task.text)}</div>
+        <div class="task-meta">
+          <span class="task-tag tag-${task.tag}">${task.tag}</span>
+          ${hasTime ? `<span class="task-time-badge">${fmtTime(s.startedAt)||'—'} → ${fmtTime(s.endedAt)||'—'}</span>` : ''}
+        </div>
+      </div>
+      <button class="task-expand-btn${s._open?' open':''}" onclick="toggleDrawer(event,'${task.id}')" aria-label="Notes">▾</button>
+    </div>
+    <div class="task-drawer${s._open?' open':''}" id="dr-${task.id}">
+      <div class="drawer-time-row">
+        <button class="time-btn${s.startedAt?' set':''}" onclick="stampTime('${task.id}','start')">
+          ${s.startedAt ? '▶ '+fmtTime(s.startedAt) : '▶ Start'}
+        </button>
+        <button class="time-btn${s.endedAt?' set':''}" onclick="stampTime('${task.id}','end')">
+          ${s.endedAt ? '■ '+fmtTime(s.endedAt) : '■ End'}
+        </button>
+      </div>
+      <textarea class="drawer-note" id="note-${task.id}" placeholder="Notes, observations, anything…" onblur="saveNote('${task.id}')" oninput="autoResize(this)">${esc(s.note||'')}</textarea>
+      <div class="drawer-save-row">
+        <span class="drawer-saved" id="saved-${task.id}">Saved</span>
+        <button class="drawer-save-btn" onclick="saveNote('${task.id}')">Save note</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderZone(zoneId, tasks){
+  const el = document.getElementById(zoneId);
+  if(!el) return;
+  el.innerHTML = tasks.map(buildTaskHTML).join('');
+}
+
+function renderAllZones(){
+  ZONES.forEach(z => renderZone(z.id, z.tasks));
+  updateProgress();
+}
+
+function refreshTask(taskId){
+  const wrapper = document.getElementById('tw-'+taskId);
+  if(!wrapper) return;
+  const task = TASK_MAP[taskId];
+  const s = state[taskId]||{};
+  wrapper.outerHTML = buildTaskHTML(task);
+  // re-attach to maintain open state
+}
+
+// ── Task interactions ─────────────────────────────────────────────────────────
+function toggleTask(id){
+  if(!state[id]) state[id]={};
+  state[id].done = !state[id].done;
+  if(state[id].done && !state[id].endedAt) state[id].endedAt = new Date().toISOString();
+  if(state[id].done && !state[id].startedAt) state[id].startedAt = new Date().toISOString();
+  queueSave(id);
+  renderAllZones();
+  // restore open drawers
+  Object.keys(state).forEach(k=>{ if(state[k]&&state[k]._open){ const dr=document.getElementById('dr-'+k); if(dr){dr.classList.add('open'); const btn=dr.previousElementSibling&&dr.previousElementSibling.querySelector('.task-expand-btn'); if(btn)btn.classList.add('open'); } } });
+}
+
+function toggleDrawer(e, id){
+  e.stopPropagation();
+  if(!state[id]) state[id]={};
+  state[id]._open = !state[id]._open;
+  const dr = document.getElementById('dr-'+id);
+  const btn = e.currentTarget;
+  if(dr){ dr.classList.toggle('open', state[id]._open); }
+  if(btn){ btn.classList.toggle('open', state[id]._open); }
+  if(state[id]._open){
+    setTimeout(()=>{ const ta=document.getElementById('note-'+id); if(ta)autoResize(ta); },50);
+  }
+}
+
+function stampTime(id, which){
+  if(!state[id]) state[id]={};
+  const iso = new Date().toISOString();
+  if(which==='start') state[id].startedAt = iso;
+  else state[id].endedAt = iso;
+  queueSave(id);
+  // re-render just the time buttons
+  const btn = document.querySelector(`#dr-${id} .time-btn${which==='start'?':first-child':':last-child'}`);
+  if(btn){
+    btn.classList.add('set');
+    btn.textContent = (which==='start'?'▶ ':'■ ')+fmtTime(iso);
+  }
+  // also update badge in task row
+  const badge = document.querySelector(`#tw-${id} .task-time-badge`);
+  const s = state[id];
+  const badgeHTML = `<span class="task-time-badge">${fmtTime(s.startedAt)||'—'} → ${fmtTime(s.endedAt)||'—'}</span>`;
+  if(badge){ badge.outerHTML = badgeHTML; }
+  else {
+    const meta = document.querySelector(`#tw-${id} .task-meta`);
+    if(meta) meta.insertAdjacentHTML('beforeend', badgeHTML);
+  }
+}
+
+function saveNote(id){
+  const ta = document.getElementById('note-'+id);
+  if(!ta) return;
+  if(!state[id]) state[id]={};
+  state[id].note = ta.value;
+  queueSave(id);
+  const saved = document.getElementById('saved-'+id);
+  if(saved){ saved.classList.add('show'); setTimeout(()=>saved.classList.remove('show'),1800); }
+}
+
+function autoResize(ta){ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; }
+
+// ── Debounced save ────────────────────────────────────────────────────────────
+function queueSave(taskId){
+  saveQueue[taskId]=true;
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(flushSave, 1200);
+}
+
+async function flushSave(){
+  const ids = Object.keys(saveQueue);
+  if(!ids.length) return;
+  saveQueue={};
+  syncState('syncing');
+  try{
+    const today = todayStr();
+    const rows = ids.map(id=>{
+      const s = state[id]||{};
+      return {
+        entry_date: today,
+        task_id: id,
+        started_at: s.startedAt||null,
+        ended_at: s.endedAt||null,
+        note: s.note||null,
+        done: !!s.done,
+        updated_at: new Date().toISOString()
+      };
+    });
+    for(const row of rows) await sbUpsert(row);
+    // also save mood + progress summary
+    await sbUpsert({
+      entry_date: today,
+      task_id: '__meta__',
+      started_at: null,
+      ended_at: null,
+      note: null,
+      done: false,
+      day_data: {
+        mood,
+        blocksCompleted,
+        doneTasks: ALL_TASKS.filter(t=>state[t.id]&&state[t.id].done).map(t=>t.id)
+      },
+      updated_at: new Date().toISOString()
+    });
+    syncState('ok');
+    setTimeout(()=>syncState(''),3000);
+  }catch(err){
+    console.error(err);
+    syncState('error');
+    showToast('Sync failed — check connection');
+  }
+}
+
+// ── Load today from Supabase ──────────────────────────────────────────────────
+async function loadToday(){
+  syncState('syncing');
+  try{
+    const rows = await sbLoad(todayStr());
+    rows.forEach(row=>{
+      if(row.task_id==='__meta__'){
+        if(row.day_data){
+          if(row.day_data.mood) setMood(row.day_data.mood, false);
+          if(row.day_data.blocksCompleted) blocksCompleted=row.day_data.blocksCompleted;
+        }
+        return;
+      }
+      state[row.task_id]={
+        done: !!row.done,
+        startedAt: row.started_at||null,
+        endedAt: row.ended_at||null,
+        note: row.note||null,
+        _open: false
+      };
+    });
+    syncState('ok');
+    setTimeout(()=>syncState(''),2000);
+  }catch(err){
+    console.error(err);
+    syncState('error');
+    showToast('Could not load — working offline');
+  }
+  renderAllZones();
+  updateCycleDots();
+}
+
+// ── Progress ──────────────────────────────────────────────────────────────────
+function updateProgress(){
+  const total = ALL_TASKS.length;
+  const done  = ALL_TASKS.filter(t=>state[t.id]&&state[t.id].done).length;
+  document.getElementById('progress-fill').style.width=(done/total*100)+'%';
+  document.getElementById('progress-label').textContent=done+' of '+total+' tasks done';
+}
+
+function resetDay(){
+  if(!confirm('Reset all tasks for today?')) return;
+  state={};mood=null;blocksCompleted=0;
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('mood-tip').textContent='Tap your energy level — it changes where you start.';
+  updateCycleDots();
+  renderAllZones();
+  saveQueue={ALL_TASKS.map(t=>t.id).reduce((a,k)=>{a[k]=true;return a},{})};
+  // push deletes via upsert with done=false
+  ALL_TASKS.forEach(t=>{ saveQueue[t.id]=true; state[t.id]={done:false}; });
+  flushSave();
+  showToast('Day reset');
+}
+
+// ── Mood ──────────────────────────────────────────────────────────────────────
+const MOODS={
+  sharp:'You\'re sharp — start with your hardest task immediately, before this window closes. Name the task and set the timer now.',
+  okay:'Okay energy is enough for deep work. Start with a medium-difficulty task. Use the 2-minute rule if initiation feels sticky.',
+  flat:'Flat means deep work will produce drift. Start with light tasks or admin to build momentum, then attempt a deep block once you feel movement.',
+  wired:'Wired can go two ways. Channel it into a deep block immediately with a concrete task definition. Without a target it turns into scattered activity.'
+};
+function setMood(m, save=true){
+  mood=m;
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));
+  const btn=Array.from(document.querySelectorAll('.mood-btn')).find(b=>b.textContent.toLowerCase()===m);
+  if(btn) btn.classList.add('active');
+  document.getElementById('mood-tip').textContent=MOODS[m]||'';
+  if(save){ saveQueue['__mood__']=true; clearTimeout(saveTimer); saveTimer=setTimeout(flushSave,1200); }
+}
+
+// ── Panel nav ─────────────────────────────────────────────────────────────────
+function showPanel(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('scroll-area').scrollTop=0;
+  if(name==='history') renderHistory();
+}
+
+// ── Timer ─────────────────────────────────────────────────────────────────────
+function pad(n){return n<10?'0'+n:''+n}
+function updateTimerDisplay(){
+  const m=Math.floor(timerSeconds/60),s=timerSeconds%60;
+  const disp=document.getElementById('timer-display');
+  disp.textContent=pad(m)+':'+pad(s);
+  disp.className=timerRunning?(timerIsBreak?'break-mode':'running'):'';
+  document.getElementById('timer-mode-label').textContent=timerIsBreak?'Break — stand up, no screens':'Focus block';
+  document.getElementById('start-btn').textContent=timerRunning?'Pause':(timerSeconds<(timerIsBreak?15*60:45*60)?'Resume':'Start');
+}
+function toggleTimer(){
+  if(timerRunning){
+    clearInterval(timerInterval);timerRunning=false;releaseWakeLock();
+  }else{
+    requestWakeLock();timerRunning=true;
+    timerInterval=setInterval(()=>{
+      timerSeconds--;
+      if(timerSeconds<=0){
+        clearInterval(timerInterval);timerRunning=false;releaseWakeLock();vibrate();
+        if(!timerIsBreak){
+          blocksCompleted=Math.min(blocksCompleted+1,3);updateCycleDots();
+          timerIsBreak=true;timerSeconds=15*60;
+          showToast('Block done. 15-min break — stand up, no screens.');
+        }else{
+          timerIsBreak=false;timerSeconds=45*60;
+          showToast('Break over. Name your next task and start.');
+        }
+      }
+      updateTimerDisplay();
+    },1000);
+  }
+  updateTimerDisplay();
+}
+function resetTimer(){clearInterval(timerInterval);timerRunning=false;timerIsBreak=false;timerSeconds=45*60;releaseWakeLock();updateTimerDisplay();}
+function setPreset(t){document.getElementById('task-name-input').value=t;document.getElementById('task-name-input').focus()}
+function updateCycleDots(){
+  for(let i=0;i<3;i++){
+    const d=document.getElementById('d'+i);
+    d.className='cycle-dot';
+    if(i<blocksCompleted)d.classList.add('done');
+    else if(i===blocksCompleted)d.classList.add('current');
+  }
+}
+function vibrate(){if('vibrate'in navigator)navigator.vibrate([200,100,200])}
+async function requestWakeLock(){try{if('wakeLock'in navigator)wakeLock=await navigator.wakeLock.request('screen')}catch(e){}}
+function releaseWakeLock(){if(wakeLock){wakeLock.release();wakeLock=null}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&wakeLock===null&&timerRunning)requestWakeLock()});
+
+// ── History ───────────────────────────────────────────────────────────────────
+async function renderHistory(){
+  const container = document.getElementById('hist-content');
+  container.innerHTML='<div class="hist-empty"><span class="spinner"></span>Loading…</div>';
+  const d = dateFromOffset(histOffset);
+  const key = fmtKey(d);
+  document.getElementById('hist-date-display').textContent = histOffset===0?'Today':fmtDisplay(d);
+  document.getElementById('hist-next').classList.toggle('disabled', histOffset>=0);
+  try{
+    const rows = await sbLoad(key);
+    if(!rows.length){ container.innerHTML='<div class="hist-empty">No data for this day yet.</div>'; return; }
+    const meta = rows.find(r=>r.task_id==='__meta__');
+    const taskRows = rows.filter(r=>r.task_id!=='__meta__');
+    const byId = Object.fromEntries(taskRows.map(r=>[r.task_id,r]));
+    const doneMeta = meta&&meta.day_data&&meta.day_data.doneTasks||[];
+    const moodVal = meta&&meta.day_data&&meta.day_data.mood;
+    const doneCount = ALL_TASKS.filter(t=>byId[t.id]&&byId[t.id].done).length;
+    let html='';
+    if(moodVal||doneCount){
+      html+=`<div class="hist-mood-row">
+        ${moodVal?`<span class="hist-mood-label">Started</span><span class="hist-mood-val">${moodVal}</span>`:''}
+        <span class="hist-progress" style="margin-left:auto">${doneCount}/${ALL_TASKS.length} done</span>
+      </div>`;
+    }
+    ZONES.forEach(z=>{
+      const zoneTasks = z.tasks.filter(t=>byId[t.id]);
+      if(!zoneTasks.length) return;
+      const zoneName = document.querySelector(`#${z.id}`)&&document.querySelector(`#${z.id}`).closest('.zone')&&document.querySelector(`#${z.id}`).closest('.zone').querySelector('.zone-name');
+      const label = zoneName?zoneName.textContent:z.id;
+      html+=`<div class="hist-zone"><div class="hist-zone-head">${label}</div>`;
+      z.tasks.forEach(t=>{
+        const r=byId[t.id];
+        const isDone=r&&r.done;
+        const hasNote=r&&r.note&&r.note.trim();
+        const hasTime=r&&(r.started_at||r.ended_at);
+        if(!r&&!isDone) return;
+        html+=`<div class="hist-task">
+          <div class="hist-task-top">
+            <span class="hist-task-name">${esc(t.text)}</span>
+            <span class="${isDone?'hist-done-badge':'hist-pending-badge'}">${isDone?'Done':'Pending'}</span>
+          </div>
+          ${hasTime?`<div class="hist-times">${fmtTime(r.started_at)||'—'} → ${fmtTime(r.ended_at)||'—'}</div>`:''}
+          ${hasNote?`<div class="hist-note">${esc(r.note)}</div>`:''}
+        </div>`;
+      });
+      html+='</div>';
+    });
+    container.innerHTML=html||'<div class="hist-empty">No activity recorded for this day.</div>';
+  }catch(err){
+    container.innerHTML='<div class="hist-empty">Could not load — check connection.</div>';
+  }
+}
+
+function histNav(dir){
+  histOffset=Math.min(0,histOffset+dir);
+  renderHistory();
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function esc(s){ if(!s)return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>') }
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3200);
+}
+function setDate(){
+  const d=new Date();
+  document.getElementById('date-label').textContent=fmtDisplay(d);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+setDate();
+renderAllZones();   // render with empty state first so UI appears immediately
+loadToday();        // then hydrate from Supabase
+updateTimerDisplay();
+updateCycleDots();
+</script>
+</body>
+</html>
