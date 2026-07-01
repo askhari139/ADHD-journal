@@ -185,6 +185,55 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border-med);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* FAB */
+#tasks-fab{position:fixed;bottom:calc(var(--nav-h) + var(--safe-b) + 14px);right:16px;width:52px;height:52px;border-radius:50%;background:var(--purple);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(83,74,183,.4);z-index:20;transition:transform .15s}
+#tasks-fab:active{transform:scale(.93)}
+#tasks-fab svg{width:22px;height:22px;stroke:#fff}
+#tasks-fab-badge{position:absolute;top:2px;right:2px;min-width:18px;height:18px;border-radius:9px;background:#e05;color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px}
+#tasks-fab-badge.show{display:flex}
+#task-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:30;opacity:0;pointer-events:none;transition:opacity .25s}
+#task-overlay.show{opacity:1;pointer-events:auto}
+#task-sheet{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:20px 20px 0 0;z-index:40;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);max-height:88dvh;display:flex;flex-direction:column}
+#task-sheet.open{transform:translateY(0)}
+#task-sheet-handle{width:36px;height:4px;background:var(--border-med);border-radius:2px;margin:10px auto 0}
+#task-sheet-header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px 10px;border-bottom:.5px solid var(--border);flex-shrink:0}
+#task-sheet-title{font-size:17px;font-weight:600}
+#task-sheet-close{background:none;border:none;font-size:14px;font-weight:600;color:var(--purple);cursor:pointer;padding:4px 0;font-family:inherit}
+#task-sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 40px;flex:1}
+.ts-section-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ts-section-label{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text3)}
+.ts-section-sub{font-size:12px;color:var(--text3)}
+.ts-section-btn{margin-left:auto;font-size:12px;font-weight:600;color:var(--purple-t);background:var(--purple-l);border:none;border-radius:8px;padding:4px 10px;cursor:pointer;font-family:inherit}
+.ts-add-row{display:flex;gap:8px;margin-top:8px}
+.ts-input{flex:1;padding:10px 12px;border:1.5px solid var(--border-med);border-radius:10px;font-size:15px;background:var(--surface);color:var(--text);font-family:inherit;outline:none}
+.ts-input:focus{border-color:var(--purple)}
+.ts-input::placeholder{color:var(--text3)}
+.ts-add-btn{padding:10px 14px;border-radius:10px;background:var(--purple);color:#fff;font-size:14px;font-weight:600;border:none;cursor:pointer;font-family:inherit;white-space:nowrap}
+.ts-add-btn:active{opacity:.85}
+.ts-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:12px;margin-bottom:7px}
+.ts-item.done{opacity:.5}
+.ts-item-check{width:22px;height:22px;border:1.5px solid var(--border-med);border-radius:6px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .15s;background:var(--surface)}
+.ts-item.done .ts-item-check{background:var(--purple);border-color:var(--purple)}
+.ts-item.done .ts-item-check::after{content:'';display:block;width:5px;height:9px;border-right:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(45deg) translate(-1px,-1px)}
+.ts-item-text{flex:1;font-size:15px;line-height:1.45;color:var(--text);word-break:break-word;cursor:text;outline:none;padding:1px 2px;border-radius:4px;min-height:22px}
+.ts-item.done .ts-item-text{text-decoration:line-through;color:var(--text3)}
+.ts-item-text:focus{background:var(--surface);box-shadow:0 0 0 2px var(--purple)}
+.ts-item-actions{display:flex;gap:4px;flex-shrink:0;margin-top:1px}
+.ts-action-btn{width:28px;height:28px;border-radius:7px;border:none;background:none;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;color:var(--text3);transition:background .1s}
+.ts-action-btn:active{background:var(--surface3)}
+.log-item{display:flex;gap:10px;padding:7px 0;border-bottom:.5px solid var(--border)}
+.log-item:last-child{border-bottom:none}
+.log-time{font-size:11px;color:var(--text3);flex-shrink:0;padding-top:2px;min-width:42px}
+.log-badge{font-size:11px;font-weight:600;padding:1px 7px;border-radius:8px;flex-shrink:0;align-self:flex-start;white-space:nowrap}
+.log-badge.added{background:var(--green-l);color:var(--green-t)}
+.log-badge.done{background:var(--purple-l);color:var(--purple-t)}
+.log-badge.parked{background:var(--amber-l);color:var(--amber-t)}
+.log-badge.promoted{background:var(--teal-l);color:var(--teal-t)}
+.log-badge.deleted{background:var(--red-l);color:var(--red)}
+.log-badge.renamed{background:var(--surface2);color:var(--text2)}
+.log-badge.reset{background:var(--surface2);color:var(--text2)}
+.log-text{font-size:13px;color:var(--text2);line-height:1.5;flex:1}
 </style>
 </head>
 <body>
@@ -452,6 +501,63 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 
 </div><!-- /app -->
 <div id="toast"></div>
+<!-- Floating tasks button -->
+<button id="tasks-fab" onclick="openTaskSheet()" aria-label="Open tasks">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+  <span id="tasks-fab-badge"></span>
+</button>
+
+<!-- Task sheet overlay -->
+<div id="task-overlay" onclick="closeTaskSheet()"></div>
+
+<!-- Task sheet -->
+<div id="task-sheet">
+  <div id="task-sheet-handle"></div>
+  <div id="task-sheet-header">
+    <span id="task-sheet-title">Tasks</span>
+    <button id="task-sheet-close" onclick="closeTaskSheet()">Done</button>
+  </div>
+  <div id="task-sheet-body">
+
+    <div class="ts-section-head">
+      <span class="ts-section-label">Active</span>
+      <span class="ts-section-sub" id="active-count">0 / 3</span>
+      <button class="ts-section-btn" onclick="resetActive()">Reset</button>
+    </div>
+    <div id="active-list"></div>
+    <div class="ts-add-row">
+      <input id="active-input" class="ts-input" type="text" placeholder="Add active task…" maxlength="200" onkeydown="if(event.key==='Enter')addTask('active')" />
+      <button class="ts-add-btn" onclick="addTask('active')">Add</button>
+    </div>
+
+    <div class="ts-section-head" style="margin-top:20px">
+      <span class="ts-section-label">Parked</span>
+      <span class="ts-section-sub" id="parked-count"></span>
+    </div>
+    <div id="parked-list"></div>
+    <div class="ts-add-row">
+      <input id="parked-input" class="ts-input" type="text" placeholder="Add to parked…" maxlength="200" onkeydown="if(event.key==='Enter')addTask('parked')" />
+      <button class="ts-add-btn" onclick="addTask('parked')">Add</button>
+    </div>
+
+    <div class="ts-section-head" style="margin-top:20px">
+      <span class="ts-section-label">Ideas</span>
+      <span class="ts-section-sub" id="ideas-count"></span>
+    </div>
+    <div id="ideas-list"></div>
+    <div class="ts-add-row">
+      <input id="ideas-input" class="ts-input" type="text" placeholder="Capture an idea…" maxlength="200" onkeydown="if(event.key==='Enter')addTask('ideas')" />
+      <button class="ts-add-btn" onclick="addTask('ideas')">Add</button>
+    </div>
+
+    <div class="ts-section-head" style="margin-top:20px">
+      <span class="ts-section-label">Activity log</span>
+      <button class="ts-section-btn" id="log-toggle-btn" onclick="toggleLog()">Show</button>
+    </div>
+    <div id="task-log-list" style="display:none;padding-bottom:40px"></div>
+
+  </div>
+</div>
 
 <script>
 // ── Config ──────────────────────────────────────────────────────────────────
@@ -972,8 +1078,258 @@ function setDate(){
 setDate();
 renderAllZones();   // render with empty state first so UI appears immediately
 loadToday();        // then hydrate from Supabase
+loadTasks();        // load task queue
 updateTimerDisplay();
 updateCycleDots();
+
+// ── Tasks sheet ───────────────────────────────────────────────────────────────
+let tasks = [];   // {id, text, status:'active'|'parked'|'ideas', done:bool, createdAt}
+let taskLog = []; // {id, taskId, taskText, action, detail, loggedAt}
+let logVisible = false;
+
+function openTaskSheet(){
+  document.getElementById('task-sheet').classList.add('open');
+  document.getElementById('task-overlay').classList.add('show');
+  renderTaskSheet();
+}
+function closeTaskSheet(){
+  document.getElementById('task-sheet').classList.remove('open');
+  document.getElementById('task-overlay').classList.remove('show');
+}
+
+// ── Supabase task helpers ────────────────────────────────────────────────────
+async function loadTasks(){
+  try{
+    const r = await fetch(SB_URL+'/rest/v1/adhd_tasks?select=*&order=position.asc,created_at.asc', {headers:sbHeaders()});
+    if(!r.ok) throw new Error(await r.text());
+    tasks = await r.json();
+    updateFab();
+  }catch(e){ console.error('loadTasks',e); }
+}
+
+async function loadTaskLog(){
+  try{
+    const r = await fetch(SB_URL+'/rest/v1/adhd_task_log?select=*&order=logged_at.desc&limit=100', {headers:sbHeaders()});
+    if(!r.ok) throw new Error(await r.text());
+    taskLog = await r.json();
+  }catch(e){ console.error('loadTaskLog',e); }
+}
+
+async function sbUpsertTask(task){
+  const r = await fetch(SB_URL+'/rest/v1/adhd_tasks?on_conflict=id', {
+    method:'POST',
+    headers:{...sbHeaders(),'Prefer':'resolution=merge-duplicates'},
+    body:JSON.stringify({
+      id:task.id, text:task.text, status:task.status,
+      done:task.done, position:task.position||0,
+      created_at:task.createdAt, updated_at:new Date().toISOString()
+    })
+  });
+  if(!r.ok) throw new Error(await r.text());
+}
+
+async function sbDeleteTask(id){
+  const r = await fetch(SB_URL+'/rest/v1/adhd_tasks?id=eq.'+id, {
+    method:'DELETE', headers:sbHeaders()
+  });
+  if(!r.ok) throw new Error(await r.text());
+}
+
+async function sbInsertLog(entry){
+  const r = await fetch(SB_URL+'/rest/v1/adhd_task_log', {
+    method:'POST',
+    headers:{...sbHeaders(),'Prefer':'return=minimal'},
+    body:JSON.stringify({
+      task_id:entry.taskId, task_text:entry.taskText,
+      action:entry.action, detail:entry.detail||null,
+      logged_at:new Date().toISOString()
+    })
+  });
+  if(!r.ok) console.error('log insert failed', await r.text());
+}
+
+async function logAction(taskId, taskText, action, detail){
+  const entry = {taskId, taskText, action, detail, loggedAt:new Date().toISOString()};
+  taskLog.unshift(entry);
+  await sbInsertLog(entry);
+}
+
+// ── Task CRUD ────────────────────────────────────────────────────────────────
+function genId(){ return 'task-'+Date.now()+'-'+Math.random().toString(36).slice(2,7); }
+
+async function addTask(status){
+  const input = document.getElementById(status+'-input');
+  const text = input.value.trim();
+  if(!text) return;
+  if(status==='active'){
+    const unchecked = tasks.filter(t=>t.status==='active'&&!t.done);
+    if(unchecked.length>=3){ showToast('Active already has 3 tasks'); return; }
+  }
+  const task = {id:genId(), text, status, done:false, position:tasks.length, createdAt:new Date().toISOString()};
+  tasks.push(task);
+  input.value='';
+  renderTaskSheet();
+  updateFab();
+  try{
+    await sbUpsertTask(task);
+    await logAction(task.id, text, 'added', status);
+  }catch(e){ showToast('Sync error'); console.error(e); }
+}
+
+async function toggleTaskDone(id){
+  const t = tasks.find(t=>t.id===id);
+  if(!t) return;
+  t.done = !t.done;
+  renderTaskSheet();
+  updateFab();
+  try{
+    await sbUpsertTask(t);
+    await logAction(t.id, t.text, t.done?'done':'undone');
+    // if active just got checked, check if we need to prompt for new slot
+    if(t.done && t.status==='active'){
+      const unchecked = tasks.filter(x=>x.status==='active'&&!x.done);
+      if(unchecked.length<3) showToast('Slot open in Active — add a task or promote from Parked');
+    }
+  }catch(e){ showToast('Sync error'); console.error(e); }
+}
+
+async function deleteTask(id){
+  const t = tasks.find(t=>t.id===id);
+  if(!t) return;
+  tasks = tasks.filter(x=>x.id!==id);
+  renderTaskSheet();
+  updateFab();
+  try{
+    await sbDeleteTask(id);
+    await logAction(id, t.text, 'deleted');
+  }catch(e){ showToast('Sync error'); console.error(e); }
+}
+
+async function parkTask(id){
+  const t = tasks.find(t=>t.id===id);
+  if(!t||t.status==='parked') return;
+  const oldStatus = t.status;
+  t.status='parked'; t.done=false;
+  renderTaskSheet();
+  updateFab();
+  try{
+    await sbUpsertTask(t);
+    await logAction(t.id, t.text, 'parked', 'from '+oldStatus);
+  }catch(e){ showToast('Sync error'); console.error(e); }
+}
+
+async function promoteTask(id){
+  const t = tasks.find(t=>t.id===id);
+  if(!t) return;
+  const unchecked = tasks.filter(x=>x.status==='active'&&!x.done);
+  if(unchecked.length>=3){ showToast('Active already has 3 tasks — complete or park one first'); return; }
+  const oldStatus = t.status;
+  t.status='active'; t.done=false;
+  renderTaskSheet();
+  updateFab();
+  try{
+    await sbUpsertTask(t);
+    await logAction(t.id, t.text, 'promoted', 'from '+oldStatus);
+  }catch(e){ showToast('Sync error'); console.error(e); }
+}
+
+async function renameTask(id, newText){
+  const t = tasks.find(t=>t.id===id);
+  if(!t||t.text===newText||!newText.trim()) return;
+  const oldText = t.text;
+  t.text = newText.trim();
+  try{
+    await sbUpsertTask(t);
+    await logAction(t.id, t.text, 'renamed', oldText+' → '+t.text);
+  }catch(e){ showToast('Sync error'); console.error(e); }
+}
+
+async function resetActive(){
+  const active = tasks.filter(t=>t.status==='active');
+  // move unchecked ones to parked
+  const toPark = active.filter(t=>!t.done);
+  for(const t of toPark){ t.status='parked'; t.done=false; }
+  renderTaskSheet();
+  updateFab();
+  try{
+    for(const t of toPark){
+      await sbUpsertTask(t);
+      await logAction(t.id, t.text, 'parked', 'via Active reset');
+    }
+    await sbInsertLog({taskId:null,taskText:null,action:'reset',detail:'Active queue reset',loggedAt:new Date().toISOString()});
+    taskLog.unshift({action:'reset',detail:'Active queue reset',loggedAt:new Date().toISOString()});
+    showToast('Active reset — unchecked tasks moved to Parked');
+  }catch(e){ showToast('Sync error'); console.error(e); }
+}
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function renderTaskSheet(){
+  renderSection('active');
+  renderSection('parked');
+  renderSection('ideas');
+  if(logVisible) renderLog();
+  // update counts
+  const active = tasks.filter(t=>t.status==='active');
+  const unchecked = active.filter(t=>!t.done).length;
+  document.getElementById('active-count').textContent = unchecked+' / 3 active';
+  document.getElementById('parked-count').textContent = tasks.filter(t=>t.status==='parked').length+' tasks';
+  document.getElementById('ideas-count').textContent = tasks.filter(t=>t.status==='ideas').length+' ideas';
+}
+
+function renderSection(status){
+  const list = document.getElementById(status+'-list');
+  if(!list) return;
+  const items = tasks.filter(t=>t.status===status);
+  if(!items.length){ list.innerHTML=`<div style="font-size:13px;color:var(--text3);padding:6px 2px">Nothing here yet.</div>`; return; }
+  list.innerHTML = items.map(t => {
+    const canPromote = status!=='active';
+    const canPark    = status==='active';
+    return `<div class="ts-item${t.done?' done':''}" id="ti-${t.id}">
+      <div class="ts-item-check" onclick="toggleTaskDone('${t.id}')"></div>
+      <div class="ts-item-text" contenteditable="true" spellcheck="false"
+        onblur="renameTask('${t.id}',this.innerText.trim())"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+      >${esc(t.text)}</div>
+      <div class="ts-item-actions">
+        ${canPromote?`<button class="ts-action-btn promote" title="Move to Active" onclick="promoteTask('${t.id}')">↑</button>`:''}
+        ${canPark?`<button class="ts-action-btn park" title="Park this task" onclick="parkTask('${t.id}')">⏸</button>`:''}
+        <button class="ts-action-btn del" title="Delete" onclick="deleteTask('${t.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderLog(){
+  const el = document.getElementById('task-log-list');
+  if(!taskLog.length){ el.innerHTML='<div style="font-size:13px;color:var(--text3);padding:8px 0">No activity yet.</div>'; return; }
+  el.innerHTML = taskLog.slice(0,80).map(e=>{
+    const d = new Date(e.logged_at||e.loggedAt);
+    const timeStr = d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const dateStr = fmtDisplay(d);
+    const isToday = d.toDateString()===new Date().toDateString();
+    return `<div class="log-item">
+      <span class="log-time">${isToday?timeStr:dateStr}</span>
+      <span class="log-badge ${e.action}">${e.action}</span>
+      <span class="log-text">${esc(e.task_text||e.taskText||'')}${e.detail?'<br><span style="color:var(--text3);font-size:12px">'+esc(e.detail)+'</span>':''}</span>
+    </div>`;
+  }).join('');
+}
+
+async function toggleLog(){
+  logVisible=!logVisible;
+  const el=document.getElementById('task-log-list');
+  const btn=document.getElementById('log-toggle-btn');
+  el.style.display=logVisible?'block':'none';
+  btn.textContent=logVisible?'Hide':'Show';
+  if(logVisible){ await loadTaskLog(); renderLog(); }
+}
+
+function updateFab(){
+  const unchecked = tasks.filter(t=>t.status==='active'&&!t.done).length;
+  const badge = document.getElementById('tasks-fab-badge');
+  if(unchecked>0){ badge.textContent=unchecked; badge.classList.add('show'); }
+  else { badge.classList.remove('show'); }
+}
 </script>
 </body>
 </html>
